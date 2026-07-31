@@ -70,7 +70,9 @@ while True:
         full = UID.get(uid, "Unknown")
         short = short_name(full)
 
-        if short not in signed_in:
+        if short in signed_in:
+            signed_in.remove(short)
+        else:
             signed_in.append(short)
 
         display_scan(uid, full)
@@ -84,4 +86,3 @@ while True:
 
     except:
         continue
-
