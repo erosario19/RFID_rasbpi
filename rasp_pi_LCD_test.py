@@ -33,11 +33,8 @@ def short_name(full):
 
 def read_uid_only(reader):
     try:
-        reader.READER.init()
-        status, uid = reader.READER.anticoll()
-        if status == reader.READER.OK:
-            return int("".join(str(x) for x in uid))
-        return None
+        uid, _ = reader.read()
+        return uid
     except:
         return None
 
@@ -67,15 +64,15 @@ def display_scan(uid, full_name):
     draw.text((0, 55), full_name, fill=255)
     oled.display(image)
 
-def log_csv(uid, full_name, short, status):
-    date = time.strftime("%Y-%m-%d")
+def log_csv(uid, full_name, status):
+    date = time.strftime("%Y-%m-%d") 
     ts = time.strftime("%H:%M:%S")
     exists = os.path.isfile("attendance_log.csv")
     with open("attendance_log.csv", "a", newline="") as f:
         writer = csv.writer(f)
         if not exists:
-            writer.writerow(["UID", "FullName", "ShortName", "Date", "Time", "Status"])
-        writer.writerow([uid, full_name, short, date, ts, status])
+            writer.writerow(["UID", "FullName", "Date", "Time", "Status"])
+        writer.writerow([uid, full_name, date, ts, status])
 
 signed_in = []
 display_signed_in(signed_in)
@@ -109,7 +106,7 @@ while True:
             signed_in.append(short)
             status = "IN"
 
-        log_csv(uid, full, short, status)
+        log_csv(uid, full, status)
         display_scan(uid, full)
         time.sleep(2)
         display_signed_in(signed_in)
