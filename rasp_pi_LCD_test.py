@@ -3,6 +3,8 @@ from PIL import Image, ImageDraw
 from luma.core.interface.serial import i2c
 from luma.oled.device import sh1106
 from mfrc522 import SimpleMFRC522
+import RPi.GPIO as GPIO
+GPIO.setwarnings(False)
 import time
 
 serial = i2c(port=1, address=0x3C)
@@ -34,30 +36,47 @@ def read_uid_only(reader):
     return None
 
 def display_signed_in(names):
-    image = Image.new("1", (oled.width, oled.height))
+    oled.clear()  # HARDWARE CLEAR
+
+    image = Image.new("1", (oled.width, oled.height))  # FRAMEBUFFER CLEAR
     draw = ImageDraw.Draw(image)
+
     draw.text((0, 0), "Signed In:", fill=255)
+
     col1_x = 0
     col2_x = 70
     row_height = 12
+
     for i, name in enumerate(names):
         row = i % 4
         col = i // 4
         x = col1_x if col == 0 else col2_x
         y = 12 + row * row_height
         draw.text((x, y), name[:12], fill=255)
+
     oled.display(image)
 
 def display_scan(uid, full_name):
-    image = Image.new("1", (oled.width, oled.height))
+    ts = time.strftime("%H:%M:%S")
+
+    oled.clear()  # HARDWARE CLEAR
+
+    image = Image.new("1", (oled.width, oled.height))  # FRAMEBUFFER CLEAR
     draw = ImageDraw.Draw(image)
-    draw.text((0, 0), "ID Scanned", fill=255)
-    draw.text((0, 20), str(uid), fill=255)
+
+    draw.text((0, 0), str(uid), fill=255)
+    draw.text((0, 20), ts, fill=255)
     draw.text((0, 40), full_name, fill=255)
+
     oled.display(image)
 
 reader = SimpleMFRC522()
 signed_in = []
+startup_time = time.time()
+
+last_uid = None
+last_time = 0
+debounce_delay = 0.8
 
 display_signed_in(signed_in)
 
@@ -67,10 +86,26 @@ while True:
         if uid is None:
             continue
 
-        full = UID.get(uid, "Unknown")
+        if time.time() - startup_time < 1:
+            signed_in = []
+            display_signed_in(signed_in)
+            continue
+
+        if uid == last_uid and time.time() - last_time < debounce_delay:
+            continue
+
+        last_uid = uid
+        last_time = time.time()
+
+        if uid not in UID:
+            continue
+
+        full = UID[uid]
         short = short_name(full)
 
-        if short not in signed_in:
+        if short in signed_in:
+            signed_in.remove(short)
+        else:
             signed_in.append(short)
 
         display_scan(uid, full)
@@ -78,6 +113,9 @@ while True:
 
         display_signed_in(signed_in)
         time.sleep(0.5)
+
+    except KeyboardInterrupt:
+        break
 
     except:
         continue
