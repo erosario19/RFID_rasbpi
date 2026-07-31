@@ -3,9 +3,9 @@ from PIL import Image, ImageDraw
 from luma.core.interface.serial import i2c
 from luma.oled.device import sh1106
 from mfrc522 import SimpleMFRC522
-import time
 import RPi.GPIO as GPIO
 GPIO.setwarnings(False)
+import time
 
 serial = i2c(port=1, address=0x3C)
 oled = sh1106(serial)
@@ -36,33 +36,41 @@ def read_uid_only(reader):
     return None
 
 def display_signed_in(names):
-    image = Image.new("1", (oled.width, oled.height))
+    image = Image.new("1", (oled.width, oled.height))  # FULL CLEAR
     draw = ImageDraw.Draw(image)
     draw.text((0, 0), "Signed In:", fill=255)
+
     col1_x = 0
     col2_x = 70
     row_height = 12
+
     for i, name in enumerate(names):
         row = i % 4
         col = i // 4
         x = col1_x if col == 0 else col2_x
         y = 12 + row * row_height
         draw.text((x, y), name[:12], fill=255)
+
     oled.display(image)
-    print("DISPLAY")
 
 def display_scan(uid, full_name):
     ts = time.strftime("%H:%M:%S")
-    image = Image.new("1", (oled.width, oled.height))
+    image = Image.new("1", (oled.width, oled.height))  # FULL CLEAR
     draw = ImageDraw.Draw(image)
+
     draw.text((0, 0), str(uid), fill=255)
     draw.text((0, 20), ts, fill=255)
     draw.text((0, 40), full_name, fill=255)
+
     oled.display(image)
 
 reader = SimpleMFRC522()
 signed_in = []
 startup_time = time.time()
+
+last_uid = None
+last_time = 0
+debounce_delay = 0.8
 
 display_signed_in(signed_in)
 
@@ -76,6 +84,12 @@ while True:
             signed_in = []
             display_signed_in(signed_in)
             continue
+
+        if uid == last_uid and time.time() - last_time < debounce_delay:
+            continue
+
+        last_uid = uid
+        last_time = time.time()
 
         if uid not in UID:
             continue
