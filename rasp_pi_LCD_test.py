@@ -33,8 +33,11 @@ def short_name(full):
 
 def read_uid_only(reader):
     try:
-        uid, _ = reader.read()
-        return uid
+        reader.READER.init()
+        status, uid = reader.READER.anticoll()
+        if status == reader.READER.OK:
+            return int("".join(str(x) for x in uid))
+        return None
     except:
         return None
 
