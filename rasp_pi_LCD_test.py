@@ -60,7 +60,11 @@ display_signed_in(signed_in)
 
 while True:
     try:
-        uid, text = reader.read()
+        try:
+            uid, text = reader.read()
+        except:
+            continue
+
         full = UID.get(uid, "Unknown")
         short = short_name(full)
 
@@ -71,8 +75,7 @@ while True:
         time.sleep(2)
 
         display_signed_in(signed_in)
-        time.sleep(1)
+        time.sleep(0.5)
 
-    except Exception as e:
-        print("Error:", e)
-        time.sleep(1)
+    except:
+        continue
