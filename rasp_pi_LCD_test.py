@@ -2,21 +2,36 @@
 from PIL import Image, ImageDraw
 from luma.core.interface.serial import i2c
 from luma.oled.device import sh1106
+from mfrc522 import SimpleMFRC522
 import time
 
 serial = i2c(port=1, address=0x3C)
 oled = sh1106(serial)
 
-image = Image.new("1", (oled.width, oled.height))
-draw = ImageDraw.Draw(image)
+def display_message(line1, line2=""):
+    image = Image.new("1", (oled.width, oled.height))
+    draw = ImageDraw.Draw(image)
+    draw.text((0, 0), line1, fill=255)
+    draw.text((0, 20), line2, fill=255)
+    oled.display(image)
 
-draw.text((0, 0), "OLED Test", fill=255)
-draw.text((0, 20), "Hello Elizabeth!", fill=255)
+display_message("Ready to Scan", "Present your card")
 
-oled.display(image)
+reader = SimpleMFRC522()
 
-print("Message displayed.")
+print("Waiting for RFID card...")
 
-# Keep program running
 while True:
-    time.sleep(1)
+    try:
+        id, text = reader.read()
+        print(f"Card detected: {id}")
+
+        display_message("Card Scanned!", f"ID: {id}")
+
+        time.sleep(2)
+
+        display_message("Ready to Scan", "Present your card")
+
+    except Exception as e:
+        print("Error:", e)
+        time.sleep(1)
