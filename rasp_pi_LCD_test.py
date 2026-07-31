@@ -49,6 +49,7 @@ def display_signed_in(names):
         y = 12 + row * row_height
         draw.text((x, y), name[:12], fill=255)
     oled.display(image)
+    print("DISPLAY")
 
 def display_scan(uid, full_name):
     ts = time.strftime("%H:%M:%S")
