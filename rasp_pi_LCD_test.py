@@ -4,14 +4,15 @@ from luma.core.interface.serial import i2c
 from luma.oled.device import sh1106
 from mfrc522 import SimpleMFRC522
 import RPi.GPIO as GPIO
-GPIO.setwarnings(False)
 import time
+import csv
+import os
 
-# --- OLED SETUP ---
+GPIO.setwarnings(False)
+
 serial = i2c(port=1, address=0x3C)
 oled = sh1106(serial)
 
-# --- UID → NAME MAPPING ---
 UID = {
     660952385193: "Stephen Kuebler",
     84873119234: "Nicholas Young",
@@ -23,7 +24,6 @@ UID = {
     211993128642: "Chad Horton"
 }
 
-# --- SHORT NAME RULES ---
 def short_name(full):
     if full == "Tyrone Thames":
         return "Tyrone T"
@@ -31,52 +31,54 @@ def short_name(full):
         return "Tyrone M"
     return full.split()[0]
 
-# --- RELIABLE RFID READ (THIS FIXES YOUR FREEZE) ---
 def read_uid_only(reader):
     try:
-        uid, _ = reader.read()   # FULL READ — WORKS EVERY TIME
-        return uid
+        reader.READER.init()
+        status, uid = reader.READER.anticoll()
+        if status == reader.READER.OK:
+            return int("".join(str(x) for x in uid))
+        return None
     except:
         return None
 
-# --- SIGNED-IN SCREEN ---
 def display_signed_in(names):
-    image = Image.new("1", (oled.width, oled.height))  # FULL CLEAR
+    image = Image.new("1", (oled.width, oled.height))
     draw = ImageDraw.Draw(image)
-
     draw.text((0, 0), "Signed In:", fill=255)
-
     col1_x = 0
     col2_x = 70
     row_height = 12
-
     for i, name in enumerate(names):
         row = i % 4
         col = i // 4
         x = col1_x if col == 0 else col2_x
         y = 12 + row * row_height
         draw.text((x, y), name[:12], fill=255)
-
     oled.display(image)
 
-# --- SCAN SCREEN ---
 def display_scan(uid, full_name):
+    date = time.strftime("%Y-%m-%d")
     ts = time.strftime("%H:%M:%S")
-
-    image = Image.new("1", (oled.width, oled.height))  # FULL CLEAR
+    image = Image.new("1", (oled.width, oled.height))
     draw = ImageDraw.Draw(image)
-
     draw.text((0, 0), str(uid), fill=255)
-    draw.text((0, 20), ts, fill=255)
-    draw.text((0, 40), full_name, fill=255)
-
+    draw.text((0, 20), date, fill=255)
+    draw.text((0, 40), ts, fill=255)
+    draw.text((0, 55), full_name, fill=255)
     oled.display(image)
 
-# --- MAIN LOOP ---
+def log_csv(uid, full_name, short, status):
+    date = time.strftime("%Y-%m-%d")
+    ts = time.strftime("%H:%M:%S")
+    exists = os.path.isfile("attendance_log.csv")
+    with open("attendance_log.csv", "a", newline="") as f:
+        writer = csv.writer(f)
+        if not exists:
+            writer.writerow(["UID", "FullName", "ShortName", "Date", "Time", "Status"])
+        writer.writerow([uid, full_name, short, date, ts, status])
+
 reader = SimpleMFRC522()
 signed_in = []
-startup_time = time.time()
-
 last_uid = None
 last_time = 0
 debounce_delay = 0.8
@@ -86,40 +88,28 @@ display_signed_in(signed_in)
 while True:
     try:
         uid = read_uid_only(reader)
-
         if uid is None:
             continue
-
-        # Prevent double-scan
         if uid == last_uid and time.time() - last_time < debounce_delay:
             continue
-
         last_uid = uid
         last_time = time.time()
-
         if uid not in UID:
             continue
-
         full = UID[uid]
         short = short_name(full)
-
-        # Toggle logic
         if short in signed_in:
             signed_in.remove(short)
+            status = "OUT"
         else:
             signed_in.append(short)
-
-        # Show scan screen
+            status = "IN"
+        log_csv(uid, full, short, status)
         display_scan(uid, full)
         time.sleep(2)
-
-        # Return to signed-in list
         display_signed_in(signed_in)
         time.sleep(0.5)
-
     except KeyboardInterrupt:
         break
-
-    except Exception as e:
-        print("Error:", e)
+    except:
         continue
