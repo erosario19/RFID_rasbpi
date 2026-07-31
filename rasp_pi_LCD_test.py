@@ -9,10 +9,9 @@ import csv
 import os
 
 GPIO.setwarnings(False)
+
 serial = i2c(port=1, address=0x3C)
 oled = sh1106(serial)
-
-CSV_PATH = "/home/npmraspberry/RFID_rasbpi/attendance_log.csv"
 
 UID = {
     660952385193: "Stephen Kuebler",
@@ -34,9 +33,12 @@ def short_name(full):
 
 def read_uid_only(reader):
     try:
-        return reader.read_id_no_block()
-    except Exception as e:
-        print(f"Read error: {e}")
+        reader.READER.init()
+        status, uid = reader.READER.anticoll()
+        if status == reader.READER.OK:
+            return int("".join(str(x) for x in uid))
+        return None
+    except:
         return None
 
 def display_signed_in(names):
@@ -65,18 +67,19 @@ def display_scan(uid, full_name):
     draw.text((0, 55), full_name, fill=255)
     oled.display(image)
 
-def log_csv(uid, full_name, status):
+def log_csv(uid, full_name, short, status):
     date = time.strftime("%Y-%m-%d")
     ts = time.strftime("%H:%M:%S")
-    exists = os.path.isfile(CSV_PATH)
-    with open(CSV_PATH, "a", newline="") as f:
+    exists = os.path.isfile("attendance_log.csv")
+    with open("attendance_log.csv", "a", newline="") as f:
         writer = csv.writer(f)
         if not exists:
-            writer.writerow(["UID", "FullName", "Date", "Time", "Status"])
-        writer.writerow([uid, full_name, date, ts, status])
+            writer.writerow(["UID", "FullName", "ShortName", "Date", "Time", "Status"])
+        writer.writerow([uid, full_name, short, date, ts, status])
 
 signed_in = []
 display_signed_in(signed_in)
+
 reader = SimpleMFRC522()
 last_uid = None
 last_time = 0
@@ -106,13 +109,13 @@ while True:
             signed_in.append(short)
             status = "IN"
 
-        log_csv(uid, full, status)
+        log_csv(uid, full, short, status)
         display_scan(uid, full)
         time.sleep(2)
         display_signed_in(signed_in)
         time.sleep(0.5)
+
     except KeyboardInterrupt:
         break
-    except Exception as e:
-        print(f"Error: {e}")
+    except:
         continue
