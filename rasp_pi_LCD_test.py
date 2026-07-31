@@ -4,6 +4,8 @@ from luma.core.interface.serial import i2c
 from luma.oled.device import sh1106
 from mfrc522 import SimpleMFRC522
 import time
+import RPi.GPIO as GPIO
+GPIO.setwarnings(False)
 
 serial = i2c(port=1, address=0x3C)
 oled = sh1106(serial)
