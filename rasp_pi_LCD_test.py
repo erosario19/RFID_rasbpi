@@ -77,14 +77,14 @@ def log_csv(uid, full_name, short, status):
             writer.writerow(["UID", "FullName", "ShortName", "Date", "Time", "Status"])
         writer.writerow([uid, full_name, short, date, ts, status])
 
-
+signed_in = []
 display_signed_in(signed_in)
 
 reader = SimpleMFRC522()
 last_uid = None
 last_time = 0
 debounce_delay = 0.8
-signed_in = []
+
 while True:
     try:
         uid = read_uid_only(reader)
