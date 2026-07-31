@@ -8,7 +8,6 @@ import time
 serial = i2c(port=1, address=0x3C)
 oled = sh1106(serial)
 
-# UID → Name mapping
 UID = {
     660952385193: "Stephen Kuebler",
     84873119234: "Nicholas Young",
@@ -20,41 +19,40 @@ UID = {
     211993128642: "Chad Horton"
 }
 
-def display_message(line1, line2=""):
+def display_signed_in(names):
     image = Image.new("1", (oled.width, oled.height))
     draw = ImageDraw.Draw(image)
-    draw.text((0, 0), line1, fill=255)
-    draw.text((0, 20), line2, fill=255)
+
+    draw.text((0, 0), "Signed In:", fill=255)
+
+    col1_x = 0
+    col2_x = 70
+    row_height = 12
+
+    for i, name in enumerate(names):
+        row = i % 4
+        col = i // 4
+        x = col1_x if col == 0 else col2_x
+        y = 12 + row * row_height
+        draw.text((x, y), name[:12], fill=255)
+
     oled.display(image)
 
-display_message("Ready to Scan")
-
 reader = SimpleMFRC522()
-print("Waiting for RFID card...")
+signed_in = []
 
-signed_in = []  
+display_signed_in(signed_in)
 
 while True:
     try:
         uid, text = reader.read()
-        print(f"Card detected: {uid}")
-
         name = UID.get(uid, "Unknown")
 
         if name not in signed_in:
             signed_in.append(name)
 
-        if len(signed_in) == 1:
-            display_message("Signed In:", signed_in[0])
-        else:
-            last_two = signed_in[-2:]
-            line1 = "Signed In:"
-            line2 = ", ".join(last_two)
-            display_message(line1, line2)
-
-        time.sleep(2)
-
-        display_message("Ready to Scan")
+        display_signed_in(signed_in)
+        time.sleep(1)
 
     except Exception as e:
         print("Error:", e)
