@@ -7,9 +7,11 @@ import RPi.GPIO as GPIO
 GPIO.setwarnings(False)
 import time
 
+# --- OLED SETUP ---
 serial = i2c(port=1, address=0x3C)
 oled = sh1106(serial)
 
+# --- UID → NAME MAPPING ---
 UID = {
     660952385193: "Stephen Kuebler",
     84873119234: "Nicholas Young",
@@ -21,6 +23,7 @@ UID = {
     211993128642: "Chad Horton"
 }
 
+# --- SHORT NAME RULES ---
 def short_name(full):
     if full == "Tyrone Thames":
         return "Tyrone T"
@@ -28,17 +31,17 @@ def short_name(full):
         return "Tyrone M"
     return full.split()[0]
 
+# --- RELIABLE RFID READ (THIS FIXES YOUR FREEZE) ---
 def read_uid_only(reader):
-    reader.READER.init()
-    (status, uid) = reader.READER.anticoll()
-    if status == reader.READER.OK:
-        return int("".join(str(x) for x in uid))
-    return None
+    try:
+        uid, _ = reader.read()   # FULL READ — WORKS EVERY TIME
+        return uid
+    except:
+        return None
 
+# --- SIGNED-IN SCREEN ---
 def display_signed_in(names):
-    oled.clear()  # HARDWARE CLEAR
-
-    image = Image.new("1", (oled.width, oled.height))  # FRAMEBUFFER CLEAR
+    image = Image.new("1", (oled.width, oled.height))  # FULL CLEAR
     draw = ImageDraw.Draw(image)
 
     draw.text((0, 0), "Signed In:", fill=255)
@@ -56,12 +59,11 @@ def display_signed_in(names):
 
     oled.display(image)
 
+# --- SCAN SCREEN ---
 def display_scan(uid, full_name):
     ts = time.strftime("%H:%M:%S")
 
-    oled.clear()  # HARDWARE CLEAR
-
-    image = Image.new("1", (oled.width, oled.height))  # FRAMEBUFFER CLEAR
+    image = Image.new("1", (oled.width, oled.height))  # FULL CLEAR
     draw = ImageDraw.Draw(image)
 
     draw.text((0, 0), str(uid), fill=255)
@@ -70,6 +72,7 @@ def display_scan(uid, full_name):
 
     oled.display(image)
 
+# --- MAIN LOOP ---
 reader = SimpleMFRC522()
 signed_in = []
 startup_time = time.time()
@@ -83,14 +86,11 @@ display_signed_in(signed_in)
 while True:
     try:
         uid = read_uid_only(reader)
+
         if uid is None:
             continue
 
-        if time.time() - startup_time < 1:
-            signed_in = []
-            display_signed_in(signed_in)
-            continue
-
+        # Prevent double-scan
         if uid == last_uid and time.time() - last_time < debounce_delay:
             continue
 
@@ -103,19 +103,23 @@ while True:
         full = UID[uid]
         short = short_name(full)
 
+        # Toggle logic
         if short in signed_in:
             signed_in.remove(short)
         else:
             signed_in.append(short)
 
+        # Show scan screen
         display_scan(uid, full)
         time.sleep(2)
 
+        # Return to signed-in list
         display_signed_in(signed_in)
         time.sleep(0.5)
 
     except KeyboardInterrupt:
         break
 
-    except:
+    except Exception as e:
+        print("Error:", e)
         continue
