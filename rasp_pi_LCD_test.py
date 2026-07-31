@@ -26,23 +26,26 @@ def short_name(full):
         return "Tyrone M"
     return full.split()[0]
 
+def read_uid_only(reader):
+    reader.READER.init()
+    (status, uid) = reader.READER.anticoll()
+    if status == reader.READER.OK:
+        return int("".join(str(x) for x in uid))
+    return None
+
 def display_signed_in(names):
     image = Image.new("1", (oled.width, oled.height))
     draw = ImageDraw.Draw(image)
-
     draw.text((0, 0), "Signed In:", fill=255)
-
     col1_x = 0
     col2_x = 70
     row_height = 12
-
     for i, name in enumerate(names):
         row = i % 4
         col = i // 4
         x = col1_x if col == 0 else col2_x
         y = 12 + row * row_height
         draw.text((x, y), name[:12], fill=255)
-
     oled.display(image)
 
 def display_scan(uid, full_name):
@@ -60,9 +63,8 @@ display_signed_in(signed_in)
 
 while True:
     try:
-        try:
-            uid, text = reader.read()
-        except:
+        uid = read_uid_only(reader)
+        if uid is None:
             continue
 
         full = UID.get(uid, "Unknown")
