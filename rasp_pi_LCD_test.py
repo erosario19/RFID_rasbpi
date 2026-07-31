@@ -79,5 +79,9 @@ while True:
         display_signed_in(signed_in)
         time.sleep(0.5)
 
+    except KeyboardInterrupt:
+        break
+
     except:
         continue
+
