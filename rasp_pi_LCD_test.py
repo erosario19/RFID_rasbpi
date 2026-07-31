@@ -10,12 +10,9 @@ oled = sh1106(serial)
 image = Image.new("1", (oled.width, oled.height))
 draw = ImageDraw.Draw(image)
 
-draw.text((0, 0), "OLED Test", fill=255)
-draw.text((0, 20), "Hello Elizabeth!", fill=255)
+draw.text((0, 0), "test!!", fill=255)
 
 oled.display(image)
-
-print("test!")
 
 while True:
     time.sleep(1)
