@@ -48,14 +48,13 @@ def display_signed_in(names):
         draw.text((x, y), name[:12], fill=255)
     oled.display(image)
 
-def display_scan(uid, full_name):
+def display_scan(full_name):
     ts = time.strftime("%H:%M:%S")
     image = Image.new("1", (oled.width, oled.height))
     draw = ImageDraw.Draw(image)
     draw.text((0, 0), "ID Scanned", fill=255)
-    draw.text((0, 20), str(uid), fill=255)
-    draw.text((0, 40), full_name, fill=255)
-    draw.text((0, 52), ts, fill=255)
+    draw.text((0, 20), full_name, fill=255)
+    draw.text((0, 40), ts, fill=255)
     oled.display(image)
 
 reader = SimpleMFRC522()
@@ -75,7 +74,10 @@ while True:
             display_signed_in(signed_in)
             continue
 
-        full = UID.get(uid, "Unknown")
+        if uid not in UID:
+            continue
+
+        full = UID[uid]
         short = short_name(full)
 
         if short in signed_in:
@@ -83,7 +85,7 @@ while True:
         else:
             signed_in.append(short)
 
-        display_scan(uid, full)
+        display_scan(full)
         time.sleep(2)
 
         display_signed_in(signed_in)
