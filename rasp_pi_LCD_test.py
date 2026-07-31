@@ -94,21 +94,27 @@ while True:
             continue
         last_uid = uid
         last_time = time.time()
-        if uid not in UID:
-            continue
-        full = UID[uid]
-        short = short_name(full)
+
+        if uid in UID:
+            full = UID[uid]
+            short = short_name(full)
+        else:
+            full = "Unknown"
+            short = "Unknown"
+
         if short in signed_in:
             signed_in.remove(short)
             status = "OUT"
         else:
             signed_in.append(short)
             status = "IN"
+
         log_csv(uid, full, short, status)
         display_scan(uid, full)
         time.sleep(2)
         display_signed_in(signed_in)
         time.sleep(0.5)
+
     except KeyboardInterrupt:
         break
     except:
