@@ -81,4 +81,16 @@ while True:
         if short in signed_in:
             signed_in.remove(short)
         else:
-            signed_in.append(short
+            signed_in.append(short)
+
+        display_scan(uid, full)
+        time.sleep(2)
+
+        display_signed_in(signed_in)
+        time.sleep(0.5)
+
+    except KeyboardInterrupt:
+        break
+
+    except:
+        continue
