@@ -36,8 +36,11 @@ def read_uid_only(reader):
     return None
 
 def display_signed_in(names):
-    image = Image.new("1", (oled.width, oled.height))  # FULL CLEAR
+    oled.clear()  # HARDWARE CLEAR
+
+    image = Image.new("1", (oled.width, oled.height))  # FRAMEBUFFER CLEAR
     draw = ImageDraw.Draw(image)
+
     draw.text((0, 0), "Signed In:", fill=255)
 
     col1_x = 0
@@ -55,7 +58,10 @@ def display_signed_in(names):
 
 def display_scan(uid, full_name):
     ts = time.strftime("%H:%M:%S")
-    image = Image.new("1", (oled.width, oled.height))  # FULL CLEAR
+
+    oled.clear()  # HARDWARE CLEAR
+
+    image = Image.new("1", (oled.width, oled.height))  # FRAMEBUFFER CLEAR
     draw = ImageDraw.Draw(image)
 
     draw.text((0, 0), str(uid), fill=255)
