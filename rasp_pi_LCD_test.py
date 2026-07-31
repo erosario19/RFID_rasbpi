@@ -71,7 +71,7 @@ def log_csv(uid, full_name, status):
     date = time.strftime("%Y-%m-%d")
     ts = time.strftime("%H:%M:%S")
     exists = os.path.isfile("attendance_log.csv")
-    with open("attendance_log.csv", "a", newline="") as f:
+    with open("/home/npmraspberry/RFID_rasbpi/attendance_log.csv", "a", newline="") as f:
         writer = csv.writer(f)
         if not exists:
             writer.writerow(["UID", "FullName","Date", "Time", "Status"])
@@ -111,7 +111,7 @@ while True:
 
         log_csv(uid, full, status)
         display_scan(uid, full)
-        time.sleep(1)
+        time.sleep(0.5)
         display_signed_in(signed_in)
         time.sleep(0.5)
 
