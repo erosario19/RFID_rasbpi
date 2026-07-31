@@ -19,6 +19,13 @@ UID = {
     211993128642: "Chad Horton"
 }
 
+def short_name(full):
+    if full == "Tyrone Thames":
+        return "Tyrone T"
+    if full == "Tyrone Morales":
+        return "Tyrone M"
+    return full.split()[0]
+
 def display_signed_in(names):
     image = Image.new("1", (oled.width, oled.height))
     draw = ImageDraw.Draw(image)
@@ -38,6 +45,14 @@ def display_signed_in(names):
 
     oled.display(image)
 
+def display_scan(uid, full_name):
+    image = Image.new("1", (oled.width, oled.height))
+    draw = ImageDraw.Draw(image)
+    draw.text((0, 0), "ID Scanned", fill=255)
+    draw.text((0, 20), str(uid), fill=255)
+    draw.text((0, 40), full_name, fill=255)
+    oled.display(image)
+
 reader = SimpleMFRC522()
 signed_in = []
 
@@ -46,10 +61,14 @@ display_signed_in(signed_in)
 while True:
     try:
         uid, text = reader.read()
-        name = UID.get(uid, "Unknown")
+        full = UID.get(uid, "Unknown")
+        short = short_name(full)
 
-        if name not in signed_in:
-            signed_in.append(name)
+        if short not in signed_in:
+            signed_in.append(short)
+
+        display_scan(uid, full)
+        time.sleep(2)
 
         display_signed_in(signed_in)
         time.sleep(1)
