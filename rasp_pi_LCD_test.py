@@ -64,15 +64,15 @@ def display_scan(uid, full_name):
     draw.text((0, 40), full_name, fill=255)
     oled.display(image)
 
-def log_csv(uid, full_name, short, status):
+def log_csv(uid, full_name, status):
     date = time.strftime("%Y-%m-%d")
     ts = time.strftime("%H:%M:%S")
     exists = os.path.isfile(CSV_PATH)
     with open(CSV_PATH, "a", newline="") as f:
         writer = csv.writer(f)
         if not exists:
-            writer.writerow(["UID", "FullName", "ShortName", "Date", "Time", "Status"])
-        writer.writerow([uid, full_name, short, date, ts, status])
+            writer.writerow(["UID", "FullName", "Date", "Time", "Status"])
+        writer.writerow([uid, full_name, date, ts, status])
 
 signed_in = []
 display_signed_in(signed_in)
@@ -105,7 +105,7 @@ while True:
             signed_in.append(short)
             status = "IN"
 
-        log_csv(uid, full, short, status)
+        log_csv(uid, full, status)
         display_scan(uid, full)
         time.sleep(2)
         display_signed_in(signed_in)
