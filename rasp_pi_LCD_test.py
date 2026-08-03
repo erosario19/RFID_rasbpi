@@ -7,10 +7,13 @@ import RPi.GPIO as GPIO
 import time
 import csv
 import os
+import socket 
 
 GPIO.setwarnings(False)
 serial = i2c(port=1, address=0x3C)
 oled = sh1106(serial)
+
+room_num = socket.gethostname()
 
 CSV_PATH = "/home/npmraspberry/RFID_rasbpi/attendance_log.csv"
 
@@ -24,6 +27,8 @@ UID = {
     212213919448: "Alexander Cockerham",
     211993128642: "Chad Horton"
 }
+
+
 
 def short_name(full):
     if full == "Tyrone Thames":
@@ -71,8 +76,8 @@ def log_csv(uid, full_name, status):
     with open(CSV_PATH, "a", newline="") as f:
         writer = csv.writer(f)
         if not exists:
-            writer.writerow(["UID", "FullName", "Date", "Time", "Status"])
-        writer.writerow([uid, full_name, date, ts, status])
+            writer.writerow(["UID", "FullName", "Date", "Time", "Status", "Room Number"])
+        writer.writerow([uid, full_name, date, ts, status, room_num])
 
 signed_in = []
 display_signed_in(signed_in)
