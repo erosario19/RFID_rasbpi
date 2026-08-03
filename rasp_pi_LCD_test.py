@@ -59,7 +59,6 @@ def display_scan(uid, full_name):
     ts = time.strftime("%H:%M:%S")
     image = Image.new("1", (oled.width, oled.height))
     draw = ImageDraw.Draw(image)
-    draw.text((0, 0), str(uid), fill=255)
     draw.text((0, 20), date, fill=255)
     draw.text((0, 40), ts, fill=255)
     draw.text((0, 55), full_name, fill=255)
