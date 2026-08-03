@@ -33,11 +33,8 @@ def short_name(full):
 
 def read_uid_only(reader):
     try:
-        reader.READER.init()
-        status, uid = reader.READER.anticoll()
-        if status == reader.READER.OK:
-            return int("".join(str(x) for x in uid))
-        return None
+        uid, _ = reader.read()
+        return uid
     except:
         return None
 
@@ -62,16 +59,16 @@ def display_scan(uid, full_name):
     image = Image.new("1", (oled.width, oled.height))
     draw = ImageDraw.Draw(image)
     draw.text((0, 0), str(uid), fill=255)
-    draw.text((0, 20), date, fill=255)
-    draw.text((0, 40), ts, fill=255)
-    draw.text((0, 55), full_name, fill=255)
+    draw.text((0, 15), date + " " + ts, fill=255)
+    draw.text((0, 35), full_name, fill=255)
     oled.display(image)
 
 def log_csv(uid, full_name, short, status):
     date = time.strftime("%Y-%m-%d")
     ts = time.strftime("%H:%M:%S")
-    exists = os.path.isfile("attendance_log.csv")
-    with open("attendance_log.csv", "a", newline="") as f:
+    path = "/home/npmraspberry/RFID_rasbpi/attendance_log.csv"
+    exists = os.path.isfile(path)
+    with open(path, "a", newline="") as f:
         writer = csv.writer(f)
         if not exists:
             writer.writerow(["UID", "FullName", "ShortName", "Date", "Time", "Status"])
@@ -100,7 +97,7 @@ while True:
             short = short_name(full)
         else:
             full = "Unknown"
-            short = "Unknown"
+            short = str(uid)
 
         if short in signed_in:
             signed_in.remove(short)
@@ -111,7 +108,7 @@ while True:
 
         log_csv(uid, full, short, status)
         display_scan(uid, full)
-        time.sleep(2)
+        time.sleep(1)
         display_signed_in(signed_in)
         time.sleep(0.5)
 
