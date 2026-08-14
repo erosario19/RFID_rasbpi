@@ -14,4 +14,4 @@ Tapping once is registered as signing in, and twice registers as signing out. Wh
 ## Accessing the raspberry pi: 
 Plug into monitor, username: npmraspberry and password: pi \
 All information is stored in the environment called rfid-env and the folder RFID_rasbpi. The python script that is running is called id_logger. \
-The rasbpi is set to run this script infinitely and it automatically runs it in the case that it reboots. These commands can be accessed via command prompt **sudo nanmo /etc/systemd/system/rfid.service** 
+The rasbpi is set to run this script infinitely and it automatically runs it in the case that it reboots. These commands can be accessed via command prompt: **sudo nano /etc/systemd/system/rfid.service** 
